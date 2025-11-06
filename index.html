@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ass e Mazz – Segnapunti</title>
+<style>
+  :root { --bg:#0f1220; --panel:#171a2b; --muted:#aab1c6; --text:#e8ecf5; --acc:#4cc9f0; --ok:#34d399; --warn:#f59e0b; --bad:#ef4444; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:linear-gradient(180deg,#0d1020,#0a0d16); color:var(--text); }
+  header { padding:18px 16px; display:flex; gap:12px; align-items:center; justify-content:space-between; border-bottom:1px solid #212642; position:sticky; top:0; background:rgba(13,16,32,.9); backdrop-filter: blur(6px); }
+  h1 { font-size:18px; margin:0; letter-spacing:.3px; }
+  .wrap { max-width: 1100px; margin: 18px auto; padding: 0 16px 48px; display:grid; grid-template-columns:1fr; gap:16px; }
+  @media (min-width: 900px){ .wrap{ grid-template-columns: 1.1fr .9fr; } }
+  .card { background:var(--panel); border:1px solid #232843; border-radius:14px; padding:14px; }
+  .card h2 { margin:6px 0 12px; font-size:16px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input[type="text"], input[type="number"] {
+    background:#0f1326; border:1px solid #2a3155; color:var(--text); padding:10px 12px; border-radius:10px; outline:none; width:100%;
+  }
+  input[type="number"] { max-width:120px; }
+  input::placeholder { color:#7f88a6; }
+  .btn {
+    appearance:none; border:1px solid #2a3155; background:#111633; color:var(--text);
+    padding:10px 12px; border-radius:10px; cursor:pointer; transition:.15s transform, .15s background, .15s border;
+  }
+  .btn:hover { background:#151b3d; }
+  .btn:active { transform: translateY(1px); }
+  .btn.acc { border-color: #226b82; background: #0d2430; }
+  .btn.ok { border-color:#1e7a57; background:#0e2a22; }
+  .btn.warn { border-color:#7a5a1e; background:#2a230e; }
+  .btn.bad { border-color:#7a2a2a; background:#2a0e0e; }
+  .btn.ghost { background:transparent; border-color:transparent; color:var(--muted); }
+  .players { display:flex; flex-direction:column; gap:8px; }
+  .player { display:flex; gap:8px; align-items:center; }
+  .player input { flex: 1 1 auto; }
+  .pill { font-size:12px; color:#8ea3ff; background:#0c1733; border:1px solid #22356b; padding:4px 8px; border-radius:999px; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { border-bottom:1px dashed #2a3155; padding:10px 6px; text-align:left; }
+  th { font-weight:600; color:#c7cbe2; }
+  .leader { background:linear-gradient(90deg, rgba(76,201,240,.08), transparent); }
+  .right { text-align:right; }
+  .muted { color:var(--muted); font-size:12px; }
+  .tight { margin:6px 0 0; }
+  .grid { display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+  .tag { font-size:11px; color:#b7bed8; }
+  .note { font-size:12px; color:#cbd5e1; background:#0f152d; border:1px dashed #2a3155; padding:8px; border-radius:8px; }
+  footer { text-align:center; color:#93a3c9; font-size:12px; padding:18px; }
+  .danger { color: #ffb4b4; }
+  .success { color: #b4ffd6; }
+  .empty { color:#93a3c9; font-style:italic; padding:6px 0 2px; }
+  .small { font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Ass e Mazz · Segnapunti</h1>
+  <div class="row">
+    <button id="btn-export" class="btn">Esporta</button>
+    <label class="btn" for="import-file">Importa<input id="import-file" type="file" accept="application/json" style="display:none;"></label>
+    <button id="btn-reset" class="btn bad">Azzera</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Giocatori -->
+  <section class="card" id="players-card">
+    <h2>Giocatori</h2>
+    <div class="players" id="players"></div>
+    <div class="row" style="margin-top:8px">
+      <input id="new-player" type="text" placeholder="Aggiungi giocatore (es. Daniele)" />
+      <button id="add-player" class="btn acc">Aggiungi</button>
+    </div>
+    <p class="muted tight">💡 Puoi rinominare un giocatore cliccando sul suo nome. Trascina per riordinare (desktop: tieni premuto e sposta).</p>
+  </section>
+
+  <!-- Punteggio & Obiettivo -->
+  <section class="card">
+    <h2>Punteggi</h2>
+    <div id="scoreboard"></div>
+    <div class="row" style="margin-top:8px">
+      <div class="row" style="gap:6px">
+        <span class="tag">Obiettivo</span>
+        <input id="target" type="number" placeholder="(opzionale)" min="1" />
+        <button id="save-target" class="btn">Imposta</button>
+        <button id="clear-target" class="btn ghost">Rimuovi</button>
+      </div>
+    </div>
+    <p id="winner-banner" class="note" style="display:none"></p>
+  </section>
+
+  <!-- Nuovo turno -->
+  <section class="card">
+    <h2>Nuovo turno</h2>
+    <div id="turn-form"></div>
+    <div class="row" style="margin-top:8px">
+      <input id="turn-note" type="text" placeholder="Nota del turno (opzionale)" />
+      <button id="add-turn" class="btn ok">Aggiungi turno</button>
+      <button id="undo-turn" class="btn warn">Annulla ultimo turno</button>
+    </div>
+    <p class="muted tight">Inserisci i punti del turno per ciascun giocatore (ammessi anche negativi). Somma automatica ai totali.</p>
+  </section>
+
+  <!-- Storico -->
+  <section class="card">
+    <h2>Storico turni</h2>
+    <div id="history"></div>
+  </section>
+
+</div>
+
+<footer>
+  <span class="small">Salvataggio automatico su questo dispositivo. · Shortcut: <code>Invio</code> aggiunge turno quando sei nell’ultimo campo.</span>
+</footer>
+
+<script>
+/* ---------- Modello dati ---------- */
+const storageKey = "assemazz_v1";
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+const state = load() || {
+  players: [],              // {id, name, score}
+  rounds: [],               // {id, values: {playerId: points}, note, ts}
+  target: null              // numeric or null
+};
+
+function save(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
+function load(){ try { return JSON.parse(localStorage.getItem(storageKey)); } catch { return null; } }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+/* ---------- Rendering ---------- */
+function renderPlayers(){
+  const box = $('#players');
+  if(state.players.length === 0){
+    box.innerHTML = `<div class="empty">Nessun giocatore. Aggiungine uno qui sotto.</div>`;
+    renderScoreboard(); renderTurnForm(); return;
+  }
+  box.innerHTML = "";
+  state.players.forEach((p, idx) => {
+    const row = document.createElement('div');
+    row.className = 'player';
+    row.draggable = true;
+    row.dataset.id = p.id;
+    row.innerHTML = `
+      <input class="player-name" value="${escapeHtml(p.name)}" aria-label="Nome giocatore ${idx+1}">
+      <button class="btn bad remove" title="Rimuovi">🗑</button>
+    `;
+    // listeners
+    row.querySelector('.player-name').addEventListener('change', e => {
+      p.name = e.target.value.trim() || `Giocatore ${idx+1}`;
+      save(); renderScoreboard(); renderTurnForm(); renderHistory();
+    });
+    row.querySelector('.remove').addEventListener('click', () => {
+      if(!confirm(`Rimuovere ${p.name}? Saranno eliminati anche i suoi punti nei turni.`)) return;
+      // elimina dallo stato
+      const i = state.players.findIndex(x => x.id === p.id);
+      state.players.splice(i,1);
+      // rimuovi riferimenti nei turni
+      state.rounds.forEach(r => { delete r.values[p.id]; });
+      save(); renderPlayers(); renderScoreboard(); renderTurnForm(); renderHistory(); checkWinner();
+    });
+
+    // drag reorder (desktop)
+    row.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', p.id); });
+    row.addEventListener('dragover', e => { e.preventDefault(); row.style.outline='1px dashed #4cc9f0'; });
+    row.addEventListener('dragleave', e => { row.style.outline=''; });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.style.outline='';
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const from = state.players.findIndex(pp => pp.id===draggedId);
+      const to = state.players.findIndex(pp => pp.id===p.id);
+      if(from>=0 && to>=0 && from!==to){
+        const [moved] = state.players.splice(from,1);
+        state.players.splice(to,0,moved);
+        save(); renderPlayers(); renderScoreboard(); renderTurnForm();
+      }
+    });
+
+    box.appendChild(row);
+  });
+}
+
+function renderScoreboard(){
+  const box = $('#scoreboard');
+  if(state.players.length === 0) { box.innerHTML = `<div class="empty">Inizia aggiungendo i giocatori.</div>`; return; }
+
+  // calcola leader
+  const max = Math.max(...state.players.map(p => p.score ?? 0));
+  const rows = state.players.map(p => `
+    <tr class="${(p.score??0)===max ? 'leader' : ''}">
+      <td>${escapeHtml(p.name)}</td>
+      <td class="right"><strong>${(p.score ?? 0)}</strong></td>
+    </tr>`).join('');
+
+  box.innerHTML = `
+    <table>
+      <thead><tr><th>Giocatore</th><th class="right">Totale</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${state.target ? `<p class="tight"><span class="pill">Obiettivo: ${state.target} punti</span></p>` : `<p class="tight muted">Nessun obiettivo impostato</p>`}
+  `;
+}
+
+function renderTurnForm(){
+  const box = $('#turn-form');
+  if(state.players.length === 0){ box.innerHTML = `<div class="empty">Aggiungi giocatori per inserire un turno.</div>`; return; }
+  const inputs = state.players.map((p,i,arr)=>{
+    const isLast = i === arr.length-1;
+    return `
+      <div>
+        <label class="tag">${escapeHtml(p.name)}</label>
+        <input type="number" class="turn-input" data-id="${p.id}" placeholder="+/- punti" step="1" />
+      </div>
+    `;
+  }).join('');
+  box.innerHTML = `<div class="grid">${inputs}</div>`;
+  // Enter sull'ultimo input = aggiungi turno
+  const all = $$('.turn-input', box);
+  if(all.length){
+    const last = all[all.length-1];
+    last.addEventListener('keydown', e => {
+      if(e.key === 'Enter'){ $('#add-turn').click(); }
+    });
+  }
+}
+
+function renderHistory(){
+  const box = $('#history');
+  if(state.rounds.length === 0){
+    box.innerHTML = `<div class="empty">Ancora nessun turno registrato.</div>`;
+    return;
+  }
+  const items = state.rounds.map((r, idx) => {
+    const stamp = new Date(r.ts).toLocaleString();
+    const rows = state.players.map(p => {
+      const v = r.values[p.id];
+      const signClass = v>0?'success':(v<0?'danger':'');
+      return `<span class="${signClass}">${escapeHtml(p.name)}: ${v ?? 0}</span>`;
+    }).join(' · ');
+    return `
+      <div class="note" style="margin-bottom:8px">
+        <div><strong>Turno ${idx+1}</strong> · <span class="muted">${stamp}</span>${r.note?` · <em>${escapeHtml(r.note)}</em>`:''}</div>
+        <div style="margin-top:6px">${rows}</div>
+      </div>
+    `;
+  }).reverse().join('');
+  box.innerHTML = items;
+}
+
+function checkWinner(){
+  const banner = $('#winner-banner');
+  if(!state.target){ banner.style.display = 'none'; banner.textContent = ''; return; }
+  const reached = state.players.filter(p => (p.score ?? 0) >= state.target);
+  if(reached.length){
+    // Vincitore con punteggio più alto tra quelli che hanno superato l'obiettivo
+    const top = reached.sort((a,b)=>(b.score??0)-(a.score??0))[0];
+    banner.style.display = 'block';
+    banner.innerHTML = `🏆 <strong>${escapeHtml(top.name)}</strong> ha raggiunto l'obiettivo con <strong>${top.score}</strong> punti!`;
+  } else {
+    banner.style.display = 'none';
+    banner.textContent = '';
+  }
+}
+
+/* ---------- Azioni ---------- */
+function addPlayer(name){
+  name = (name||'').trim();
+  if(!name){ return; }
+  if(state.players.some(p => p.name.toLowerCase()===name.toLowerCase())){
+    alert('Nome già presente.');
+    return;
+  }
+  state.players.push({ id: uid(), name, score: 0 });
+  save(); renderPlayers(); renderScoreboard(); renderTurnForm();
+}
+
+function addTurn(){
+  if(state.players.length===0) return;
+  const inputs = $$('.turn-input');
+  const values = {};
+  let anyFilled = false;
+  inputs.forEach(inp=>{
+    const v = inp.value.trim();
+    const val = v==='' ? 0 : Number(v);
+    if(isNaN(val)) return;
+    values[inp.dataset.id] = val;
+    if(val!==0) anyFilled = true;
+  });
+  if(!anyFilled){
+    if(!confirm('Tutti zero. Aggiungere comunque il turno?')) return;
+  }
+  // aggiorna punteggi
+  state.players.forEach(p => { p.score = (p.score ?? 0) + (values[p.id] ?? 0); });
+
+  state.rounds.push({
+    id: uid(),
+    values,
+    note: $('#turn-note').value.trim() || null,
+    ts: Date.now()
+  });
+  // pulizia form
+  inputs.forEach(i => i.value='');
+  $('#turn-note').value='';
+  save(); renderScoreboard(); renderHistory(); checkWinner();
+}
+
+function undoTurn(){
+  if(state.rounds.length===0) return;
+  const last = state.rounds.pop();
+  // sottrai i valori
+  Object.entries(last.values).forEach(([pid, val])=>{
+    const p = state.players.find(pp => pp.id===pid);
+    if(p){ p.score = (p.score ?? 0) - (val ?? 0); }
+  });
+  save(); renderScoreboard(); renderHistory(); checkWinner();
+}
+
+function setTarget(){
+  const raw = $('#target').value.trim();
+  if(raw===''){ state.target=null; save(); renderScoreboard(); checkWinner(); return; }
+  const n = Number(raw);
+  if(!Number.isFinite(n) || n<=0) { alert('Inserisci un numero valido > 0.'); return; }
+  state.target = Math.floor(n);
+  save(); renderScoreboard(); checkWinner();
+}
+
+function clearTarget(){
+  state.target = null; $('#target').value = '';
+  save(); renderScoreboard(); checkWinner();
+}
+
+function exportGame(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const dt = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.download = `ass-e-mazz-${dt}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function importGame(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if(!data || !Array.isArray(data.players) || !Array.isArray(data.rounds)) throw new Error();
+      // normalizza struttura minima
+      state.players = data.players.map(p => ({ id: p.id||uid(), name: String(p.name||'Giocatore'), score: Number(p.score||0) }));
+      state.rounds = data.rounds.map(r => ({ id: r.id||uid(), values: r.values||{}, note: r.note||null, ts: r.ts||Date.now() }));
+      state.target = (data.target==null ? null : Number(data.target));
+      save();
+      renderPlayers(); renderScoreboard(); renderTurnForm(); renderHistory(); checkWinner();
+      alert('Partita importata con successo.');
+    } catch {
+      alert('File non valido.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetAll(){
+  if(!confirm('Azzera tutto? Questa azione non è reversibile.')) return;
+  state.players = [];
+  state.rounds = [];
+  state.target = null;
+  save();
+  renderPlayers(); renderScoreboard(); renderTurnForm(); renderHistory(); checkWinner();
+}
+
+/* ---------- Utils ---------- */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------- Event binding ---------- */
+$('#add-player').addEventListener('click', ()=>{
+  addPlayer($('#new-player').value);
+  $('#new-player').value='';
+  $('#new-player').focus();
+});
+$('#new-player').addEventListener('keydown', e => {
+  if(e.key==='Enter'){ $('#add-player').click(); }
+});
+
+$('#add-turn').addEventListener('click', addTurn);
+$('#undo-turn').addEventListener('click', undoTurn);
+$('#save-target').addEventListener('click', setTarget);
+$('#clear-target').addEventListener('click', clearTarget);
+$('#btn-export').addEventListener('click', exportGame);
+$('#import-file').addEventListener('change', e => {
+  if(e.target.files && e.target.files[0]) importGame(e.target.files[0]);
+  e.target.value = '';
+});
+$('#btn-reset').addEventListener('click', resetAll);
+
+/* ---------- Init ---------- */
+function init(){
+  // assicura campi score
+  state.players.forEach(p => { if(typeof p.score!=='number') p.score=0; });
+  renderPlayers(); renderScoreboard(); renderTurnForm(); renderHistory(); checkWinner();
+  if(state.target != null) $('#target').value = state.target;
+}
+init();
+</script>
+</body>
+</html>
