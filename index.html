@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ass e Mazz – Segnapunti</title>
+  <title>Segnapunti – Ass e Mazz / 3 e 7</title>
   <style>
     :root {
       --bg:#0f1220;
@@ -19,7 +19,7 @@
     * { box-sizing: border-box; }
     body {
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
       background:linear-gradient(180deg,#0d1020,#0a0d16);
       color:var(--text);
     }
@@ -36,11 +36,7 @@
       backdrop-filter: blur(6px);
       z-index: 10;
     }
-    h1 {
-      font-size:18px;
-      margin:0;
-      letter-spacing:.3px;
-    }
+    h1 { font-size:18px; margin:0; letter-spacing:.3px; }
     .wrap {
       max-width: 1100px;
       margin: 18px auto;
@@ -58,17 +54,9 @@
       border-radius:14px;
       padding:14px;
     }
-    .card h2 {
-      margin:6px 0 12px;
-      font-size:16px;
-    }
-    .row {
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    input[type="text"], input[type="number"] {
+    .card h2 { margin:6px 0 12px; font-size:16px; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    input[type="text"], input[type="number"], select {
       background:#0f1326;
       border:1px solid #2a3155;
       color:var(--text);
@@ -78,6 +66,7 @@
       width:100%;
     }
     input[type="number"] { max-width:120px; }
+    select { width:auto; }
     input::placeholder { color:#7f88a6; }
     .btn {
       appearance:none;
@@ -96,17 +85,11 @@
     .btn.warn { border-color:#7a5a1e; background:#2a230e; }
     .btn.bad { border-color:#7a2a2a; background:#2a0e0e; }
     .btn.ghost { background:transparent; border-color:transparent; color:var(--muted); }
+
     .players { display:flex; flex-direction:column; gap:8px; }
     .player { display:flex; gap:8px; align-items:center; }
     .player input { flex: 1 1 auto; }
-    .pill {
-      font-size:12px;
-      color:#8ea3ff;
-      background:#0c1733;
-      border:1px solid #22356b;
-      padding:4px 8px;
-      border-radius:999px;
-    }
+
     table { width:100%; border-collapse: collapse; }
     th, td {
       border-bottom:1px dashed #2a3155;
@@ -114,13 +97,6 @@
       text-align:left;
     }
     th { font-weight:600; color:#c7cbe2; }
-    .leader {
-      background:linear-gradient(90deg, rgba(76,201,240,.08), transparent);
-    }
-    .champ {
-      background:linear-gradient(90deg, rgba(255,209,102,.18), transparent);
-      box-shadow: inset 0 0 0 1px rgba(255,209,102,.45);
-    }
     .right { text-align:right; }
     .muted { color:var(--muted); font-size:12px; }
     .tight { margin:6px 0 0; }
@@ -138,71 +114,39 @@
       padding:8px;
       border-radius:8px;
     }
-    footer {
-      text-align:center;
-      color:#93a3c9;
-      font-size:12px;
-      padding:18px;
-    }
+    footer { text-align:center; color:#93a3c9; font-size:12px; padding:18px; }
     .danger { color: #ffb4b4; }
     .success { color: #b4ffd6; }
-    .empty {
-      color:#93a3c9;
-      font-style:italic;
-      padding:6px 0 2px;
+    .empty { color:#93a3c9; font-style:italic; padding:6px 0 2px; }
+    .pill {
+      font-size:12px;
+      color:#8ea3ff;
+      background:#0c1733;
+      border:1px solid #22356b;
+      padding:4px 8px;
+      border-radius:999px;
+      white-space: nowrap;
     }
-    .small { font-size:12px; }
-
-    /* --- Modal (vittoria / scelta modalità) --- */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.65);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index: 9999;
+    .leader {
+      background:linear-gradient(90deg, rgba(76,201,240,.08), transparent);
     }
-    .modal {
-      background: radial-gradient(1200px 600px at 50% -10%, rgba(255,209,102,.15), transparent), #0f1220;
-      border:1px solid #3a3145;
-      border-radius:18px;
-      padding:22px;
-      max-width:640px;
-      width:92%;
-      text-align:center;
-    }
-    .modal h3 {
-      margin:0 0 6px;
-      font-size:26px;
-    }
-    .modal p {
-      margin:8px 0 16px;
-      color:#dfe6ff;
-    }
-    .modal .winner-name {
-      font-size:28px;
-      color: var(--gold);
-      font-weight:800;
-      letter-spacing:.4px;
-    }
-    canvas#confetti {
-      position: fixed;
-      inset:0;
-      pointer-events:none;
-      z-index: 9998;
-      display:none;
+    .champ {
+      background:linear-gradient(90deg, rgba(255,209,102,.18), transparent);
+      box-shadow: inset 0 0 0 1px rgba(255,209,102,.45);
     }
   </style>
 </head>
 <body>
 <header>
   <div class="row" style="gap:10px">
-    <h1 id="title">Ass e Mazz · Segnapunti</h1>
-    <span class="pill" id="mode-pill" title="Modalità corrente"></span>
+    <h1 id="app-title">Segnapunti</h1>
+    <span class="pill" id="mode-pill"></span>
   </div>
   <div class="row">
-    <button id="btn-mode" class="btn">Modalità</button>
+    <select id="mode-select" title="Modalità">
+      <option value="assemazz">Ass e Mazz</option>
+      <option value="3e7">3 e 7</option>
+    </select>
     <button id="btn-export" class="btn">Esporta</button>
     <label class="btn" for="import-file">
       Importa
@@ -213,18 +157,16 @@
 </header>
 
 <div class="wrap">
-  <!-- Giocatori -->
-  <section class="card" id="players-card">
+  <section class="card">
     <h2>Giocatori</h2>
     <div class="players" id="players"></div>
     <div class="row" style="margin-top:8px">
       <input id="new-player" type="text" placeholder="Aggiungi giocatore (es. Daniele)" />
       <button id="add-player" class="btn acc">Aggiungi</button>
     </div>
-    <p class="muted tight" id="players-hint"></p>
+    <p class="muted tight" id="hint-players"></p>
   </section>
 
-  <!-- Punteggi & Obiettivo -->
   <section class="card">
     <h2>Punteggi</h2>
     <div id="scoreboard"></div>
@@ -239,7 +181,6 @@
     <p id="winner-banner" class="note" style="display:none"></p>
   </section>
 
-  <!-- Nuovo turno -->
   <section class="card">
     <h2>Nuovo turno</h2>
     <div id="turn-form"></div>
@@ -248,42 +189,13 @@
       <button id="add-turn" class="btn ok">Aggiungi turno</button>
       <button id="undo-turn" class="btn warn">Annulla ultimo turno</button>
     </div>
-    <p class="muted tight" id="turn-hint"></p>
+    <p class="muted tight" id="hint-turn"></p>
   </section>
 
-  <!-- Storico -->
   <section class="card">
     <h2>Storico turni</h2>
     <div id="history"></div>
   </section>
-</div>
-
-<!-- Modal vittoria + Confetti -->
-<canvas id="confetti"></canvas>
-<div id="win-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="win-title">
-  <div class="modal">
-    <h3 id="win-title">🎉 Vittoria!</h3>
-    <p>
-      <span class="winner-name" id="win-name"></span><br/>
-      <span id="win-rule"></span> con <strong id="win-score"></strong> punti
-    </p>
-    <button id="win-ok" class="btn acc">OK</button>
-  </div>
-</div>
-
-<!-- Modal scelta modalità -->
-<div id="mode-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mode-title">
-  <div class="modal">
-    <h3 id="mode-title">Scegli modalità</h3>
-    <p class="muted" id="mode-desc"></p>
-    <div class="row" style="justify-content:center; gap:10px; margin-top:14px">
-      <button id="mode-assemazz" class="btn acc">Ass e Mazz (21)</button>
-      <button id="mode-37" class="btn acc">3 e 7 (11)</button>
-    </div>
-    <div class="row" style="justify-content:center; margin-top:10px">
-      <button id="mode-cancel" class="btn ghost">Annulla</button>
-    </div>
-  </div>
 </div>
 
 <footer>
@@ -293,66 +205,71 @@
 </footer>
 
 <script>
-  /* ---------- Modello dati ---------- */
-  const storageKey = "assemazz_v3";
+  const storageKey = "assemazz_v4";
 
   const MODES = {
-    ASSEMAZZ: { id: "assemazz", name: "Ass e Mazz", limit: 21, winner: "MIN" }, // vince chi ha meno
-    TRE7:     { id: "3e7",      name: "3 e 7",      limit: 11, winner: "MAX" }  // vince chi ha più
+    assemazz: { id:"assemazz", name:"Ass e Mazz", limit:21, winner:"MIN" },
+    "3e7":    { id:"3e7",      name:"3 e 7",      limit:11, winner:"MAX" }
   };
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-
-  const state = load() || {
-    mode: null,   // "assemazz" | "3e7"
-    players: [],  // {id, name, score}
-    rounds: [],   // {id, values: {playerId: points}, note, ts}
-    target: null  // numeric or null
-  };
-
-  function currentMode(){
-    return state.mode === MODES.TRE7.id ? MODES.TRE7 : MODES.ASSEMAZZ;
-  }
-
-  function TURN_LIMIT(){
-    return currentMode().limit;
-  }
-
-  function save(){
-    localStorage.setItem(storageKey, JSON.stringify(state));
-  }
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+  const uid = () => Math.random().toString(36).slice(2,9);
 
   function load(){
-    try {
-      return JSON.parse(localStorage.getItem(storageKey));
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(localStorage.getItem(storageKey)); }
+    catch { return null; }
   }
+  function save(){ localStorage.setItem(storageKey, JSON.stringify(state)); }
 
-  function uid(){
-    return Math.random().toString(36).slice(2,9);
+  const state = load() || {
+    mode: "assemazz",
+    players: [],
+    rounds: [],
+    target: null
+  };
+
+  function mode(){ return MODES[state.mode] || MODES.assemazz; }
+  function limit(){ return mode().limit; }
+  function scoreOf(p){ return (typeof p.score === "number") ? p.score : 0; }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => (
+      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
+    ));
   }
-
-  /* ---------- Rendering ---------- */
 
   function renderModeUI(){
-    const m = currentMode();
-    $('#title').textContent = `${m.name} · Segnapunti`;
-    $('#mode-pill').textContent = `Modalità: ${m.name}`;
-    $('#players-hint').innerHTML = `💡 Limite per turno: <strong>±${m.limit}</strong> punti per giocatore. Trascina per riordinare (desktop).`;
-    $('#turn-hint').innerHTML =
+    const m = mode();
+    $("#app-title").textContent = `${m.name} · Segnapunti`;
+    $("#mode-pill").textContent = `Limite turno: ±${m.limit} · Vince: ${m.winner==="MIN" ? "punteggio più basso" : "punteggio più alto"}`;
+    $("#hint-players").innerHTML = `💡 Limite per turno: <strong>±${m.limit}</strong> punti per giocatore. Trascina per riordinare (desktop).`;
+    $("#hint-turn").innerHTML =
       `Inserisci i punti (ammessi negativi). <strong>Max ±${m.limit}</strong> per giocatore.
        Se lasci <strong>un solo giocatore vuoto</strong>, gli verranno assegnati automaticamente i punti mancanti per arrivare a ${m.limit}.`;
-    $('#mode-desc').innerHTML =
-      `Ass e Mazz: limite 21, vince chi ha <strong>meno</strong> punti. · 3 e 7: limite 11, vince chi ha <strong>più</strong> punti.`;
+    $("#mode-select").value = m.id;
+  }
+
+  function isGameOver(){
+    if (state.target == null) return false;
+    return state.players.some(p => scoreOf(p) >= state.target);
+  }
+
+  function bestPlayers(){
+    const m = mode();
+    if (state.players.length === 0) return { winners: [], bestScore: 0 };
+
+    const scores = state.players.map(p => scoreOf(p));
+    const min = Math.min.apply(null, scores);
+    const max = Math.max.apply(null, scores);
+    const bestScore = (m.winner === "MIN") ? min : max;
+    const winners = state.players.filter(p => scoreOf(p) === bestScore);
+    return { winners, bestScore };
   }
 
   function renderPlayers(){
-    const box = $('#players');
-
-    if(state.players.length === 0){
+    const box = $("#players");
+    if (state.players.length === 0){
       box.innerHTML = `<div class="empty">Nessun giocatore. Aggiungine uno qui sotto.</div>`;
       renderScoreboard();
       renderTurnForm();
@@ -361,8 +278,8 @@
 
     box.innerHTML = "";
     state.players.forEach((p, idx) => {
-      const row = document.createElement('div');
-      row.className = 'player';
+      const row = document.createElement("div");
+      row.className = "player";
       row.draggable = true;
       row.dataset.id = p.id;
 
@@ -371,19 +288,19 @@
         <button class="btn bad remove" title="Rimuovi">🗑</button>
       `;
 
-      row.querySelector('.player-name').addEventListener('change', e => {
-        p.name = e.target.value.trim() || `Giocatore ${idx+1}`;
+      row.querySelector(".player-name").addEventListener("change", e => {
+        p.name = (e.target.value.trim() || `Giocatore ${idx+1}`);
         save();
         renderScoreboard();
         renderTurnForm();
         renderHistory();
+        checkWinner();
       });
 
-      row.querySelector('.remove').addEventListener('click', () => {
-        if(!confirm(\`Rimuovere \${p.name}? Saranno eliminati anche i suoi punti nei turni.\`)) return;
-        const i = state.players.findIndex(x => x.id === p.id);
-        state.players.splice(i,1);
-        state.rounds.forEach(r => delete r.values[p.id]);
+      row.querySelector(".remove").addEventListener("click", () => {
+        if(!confirm(`Rimuovere ${p.name}? Saranno eliminati anche i suoi punti nei turni.`)) return;
+        state.players = state.players.filter(x => x.id !== p.id);
+        state.rounds.forEach(r => { delete r.values[p.id]; });
         save();
         renderPlayers();
         renderScoreboard();
@@ -392,18 +309,17 @@
         checkWinner();
       });
 
-      // drag reorder
-      row.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', p.id));
-      row.addEventListener('dragover', e => { e.preventDefault(); row.style.outline='1px dashed #4cc9f0'; });
-      row.addEventListener('dragleave', () => { row.style.outline=''; });
-      row.addEventListener('drop', e => {
+      row.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", p.id));
+      row.addEventListener("dragover", e => { e.preventDefault(); row.style.outline="1px dashed #4cc9f0"; });
+      row.addEventListener("dragleave", () => { row.style.outline=""; });
+      row.addEventListener("drop", e => {
         e.preventDefault();
-        row.style.outline='';
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const from = state.players.findIndex(pp => pp.id===draggedId);
-        const to = state.players.findIndex(pp => pp.id===p.id);
-        if(from>=0 && to>=0 && from!==to){
-          const [moved] = state.players.splice(from,1);
+        row.style.outline="";
+        const draggedId = e.dataTransfer.getData("text/plain");
+        const from = state.players.findIndex(pp => pp.id === draggedId);
+        const to = state.players.findIndex(pp => pp.id === p.id);
+        if(from >= 0 && to >= 0 && from !== to){
+          const moved = state.players.splice(from,1)[0];
           state.players.splice(to,0,moved);
           save();
           renderPlayers();
@@ -416,63 +332,40 @@
     });
   }
 
-  function isGameOver() {
-    if (state.target == null) return false;
-    return state.players.some(p => (p.score ?? 0) >= state.target);
-  }
-
-  function sortedPlayersDesc(){
-    return [...state.players].sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
-  }
-
   function renderScoreboard(){
-    const box = $('#scoreboard');
-
-    if(state.players.length === 0) {
+    const box = $("#scoreboard");
+    if(state.players.length === 0){
       box.innerHTML = `<div class="empty">Inizia aggiungendo i giocatori.</div>`;
       return;
     }
 
-    const m = currentMode();
+    // ordinata decrescente SEMPRE
+    const sorted = [...state.players].sort((a,b) => scoreOf(b) - scoreOf(a));
+
+    const { bestScore } = bestPlayers();
     const gameOver = isGameOver();
 
-    const scores = state.players.map(p => p.score ?? 0);
-    const min = Math.min(...scores);
-    const max = Math.max(...scores);
-
-    const rows = sortedPlayersDesc().map(p => {
-      const score = p.score ?? 0;
-
-      // Winner logic:
-      // - Ass e Mazz: migliore = MIN
-      // - 3 e 7: migliore = MAX
-      const isBest =
-        (m.winner === "MIN" && score === min) ||
-        (m.winner === "MAX" && score === max);
-
-      let rowClass = '';
-      if (isBest) rowClass = gameOver ? 'champ' : 'leader';
-
+    const rows = sorted.map(p => {
+      const s = scoreOf(p);
+      const isBest = (s === bestScore);
+      const rowClass = isBest ? (gameOver ? "champ" : "leader") : "";
       return `
         <tr class="${rowClass}">
           <td>${escapeHtml(p.name)}</td>
-          <td class="right"><strong>${score}</strong></td>
+          <td class="right"><strong>${s}</strong></td>
         </tr>
       `;
-    }).join('');
+    }).join("");
 
     box.innerHTML = `
       <table>
         <thead>
-          <tr>
-            <th>Giocatore</th>
-            <th class="right">Totale</th>
-          </tr>
+          <tr><th>Giocatore</th><th class="right">Totale</th></tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
       ${
-        state.target
+        state.target != null
           ? `<p class="tight"><span class="pill">Obiettivo: ${state.target} punti</span></p>`
           : `<p class="tight muted">Nessun obiettivo impostato</p>`
       }
@@ -480,42 +373,35 @@
   }
 
   function renderTurnForm(){
-    const box = $('#turn-form');
-
+    const box = $("#turn-form");
     if(state.players.length === 0){
       box.innerHTML = `<div class="empty">Aggiungi giocatori per inserire un turno.</div>`;
       return;
     }
 
-    const lim = TURN_LIMIT();
-    const inputs = state.players.map(p => `
-      <div>
-        <label class="tag">${escapeHtml(p.name)}</label>
-        <input
-          type="number"
-          class="turn-input"
-          data-id="${p.id}"
-          placeholder="+/- punti"
-          step="1"
-          min="-${lim}"
-          max="${lim}"
-        />
+    const lim = limit();
+    box.innerHTML = `
+      <div class="grid">
+        ${state.players.map(p => `
+          <div>
+            <label class="tag">${escapeHtml(p.name)}</label>
+            <input type="number" class="turn-input" data-id="${p.id}"
+              placeholder="+/- punti" step="1" min="-${lim}" max="${lim}">
+          </div>
+        `).join("")}
       </div>
-    `).join('');
+    `;
 
-    box.innerHTML = `<div class="grid">${inputs}</div>`;
-
-    const all = $$('.turn-input', box);
+    const all = $$(".turn-input", box);
     if(all.length){
-      const last = all[all.length-1];
-      last.addEventListener('keydown', e => {
-        if(e.key === 'Enter') $('#add-turn').click();
+      all[all.length-1].addEventListener("keydown", e => {
+        if(e.key === "Enter") $("#add-turn").click();
       });
     }
   }
 
   function renderHistory(){
-    const box = $('#history');
+    const box = $("#history");
     if(state.rounds.length === 0){
       box.innerHTML = `<div class="empty">Ancora nessun turno registrato.</div>`;
       return;
@@ -524,86 +410,75 @@
     const items = state.rounds.map((r, idx) => {
       const stamp = new Date(r.ts).toLocaleString();
       const rows = state.players.map(p => {
-        const v = r.values[p.id];
-        const signClass = v > 0 ? 'success' : (v < 0 ? 'danger' : '');
-        return `<span class="${signClass}">${escapeHtml(p.name)}: ${v ?? 0}</span>`;
-      }).join(' · ');
+        const v = (r.values && typeof r.values[p.id] === "number") ? r.values[p.id] : 0;
+        const cls = v > 0 ? "success" : (v < 0 ? "danger" : "");
+        return `<span class="${cls}">${escapeHtml(p.name)}: ${v}</span>`;
+      }).join(" · ");
 
-      const noteHtml = r.note ? ` · <em>${escapeHtml(r.note)}</em>` : '';
+      const note = r.note ? ` · <em>${escapeHtml(r.note)}</em>` : "";
 
       return `
         <div class="note" style="margin-bottom:8px">
-          <div><strong>Turno ${idx+1}</strong> · <span class="muted">${stamp}</span>${noteHtml}</div>
+          <div><strong>Turno ${idx+1}</strong> · <span class="muted">${stamp}</span>${note}</div>
           <div style="margin-top:6px">${rows}</div>
         </div>
       `;
-    }).reverse().join('');
+    }).reverse().join("");
 
     box.innerHTML = items;
   }
 
-  function bestPlayers(){
-    const m = currentMode();
-    const scores = state.players.map(p => p.score ?? 0);
-    const min = Math.min(...scores);
-    const max = Math.max(...scores);
+  function checkWinner(){
+    const banner = $("#winner-banner");
 
-    const bestScore = (m.winner === "MIN") ? min : max;
-    const winners = state.players.filter(p => (p.score ?? 0) === bestScore);
-    return { winners, bestScore };
-  }
-
-  function checkWinner(triggerModal = false){
-    const banner = $('#winner-banner');
-
-    if (!state.target) {
-      banner.style.display = 'none';
-      banner.textContent = '';
+    if(state.target == null){
+      banner.style.display = "none";
+      banner.textContent = "";
       return;
     }
 
-    if (!isGameOver()) {
-      banner.style.display = 'none';
-      banner.textContent = '';
+    if(!isGameOver()){
+      banner.style.display = "none";
+      banner.textContent = "";
       return;
     }
 
+    const m = mode();
     const { winners, bestScore } = bestPlayers();
-    const top = winners[0];
-    const m = currentMode();
-
     const ruleText = (m.winner === "MIN") ? "punteggio più basso" : "punteggio più alto";
 
-    banner.style.display = 'block';
-    banner.innerHTML = `🏆 <strong>${escapeHtml(top.name)}</strong> vince con <strong>${bestScore}</strong> punti (${ruleText}).`;
-
-    if (triggerModal) showWinModal(top, ruleText);
-  }
-
-  /* ---------- Azioni ---------- */
-
-  function addPlayer(name){
-    name = (name||'').trim();
-    if(!name) return;
-
-    if(state.players.some(p => p.name.toLowerCase() === name.toLowerCase())){
-      alert('Nome già presente.');
+    if(!winners.length){
+      banner.style.display = "none";
+      banner.textContent = "";
       return;
     }
 
-    state.players.push({ id: uid(), name, score: 0 });
+    banner.style.display = "block";
+    banner.innerHTML = `🏆 <strong>${escapeHtml(winners[0].name)}</strong> vince con <strong>${bestScore}</strong> punti (${ruleText}).`;
+  }
+
+  function addPlayer(name){
+    name = (name || "").trim();
+    if(!name) return;
+
+    if(state.players.some(p => String(p.name).toLowerCase() === name.toLowerCase())){
+      alert("Nome già presente.");
+      return;
+    }
+
+    state.players.push({ id: uid(), name: name, score: 0 });
     save();
     renderPlayers();
     renderScoreboard();
     renderTurnForm();
+    checkWinner();
   }
 
   function addTurn(){
-    if(state.players.length===0) return;
+    if(state.players.length === 0) return;
 
-    const lim = TURN_LIMIT();
-
-    const inputs = $$('.turn-input');
+    const lim = limit();
+    const inputs = $$(".turn-input");
     const values = {};
     let anyFilled = false;
 
@@ -611,86 +486,80 @@
     let filledCount = 0;
     const emptyInputs = [];
 
-    // Primo pass: leggo i campi, ma NON tratto i vuoti come 0
-    for (const inp of inputs) {
+    for(const inp of inputs){
       const raw = inp.value.trim();
-      const playerId = inp.dataset.id;
+      const pid = inp.dataset.id;
 
-      if (raw === '') { emptyInputs.push(inp); continue; }
+      if(raw === ""){
+        emptyInputs.push(inp);
+        continue;
+      }
 
       const val = Number(raw);
-      if (isNaN(val)) continue;
+      if(!Number.isFinite(val)) continue;
 
-      // Validazione: ±lim
-      if (Math.abs(val) > lim) {
-        alert(`Limite per turno: ±${lim}. Valore non valido per "${getPlayerNameById(playerId)}" (${val}).`);
+      if(Math.abs(val) > lim){
+        alert(`Limite per turno: ±${lim}. Valore non valido (${val}).`);
         inp.focus();
         return;
       }
 
-      values[playerId] = val;
-      if (val !== 0) anyFilled = true;
+      values[pid] = val;
+      if(val !== 0) anyFilled = true;
       sumFilled += val;
       filledCount++;
     }
 
-    // Auto-calcolo punti mancanti:
-    // - esattamente un giocatore vuoto
-    // - nessun valore negativo
-    // - somma <= lim
-    if (emptyInputs.length === 1 && filledCount > 0) {
+    // auto-mancanti (stessa logica tua) ma con limite dinamico
+    if(emptyInputs.length === 1 && filledCount > 0){
       const hasNegative = Object.values(values).some(v => v < 0);
-      if (!hasNegative) {
-        if (sumFilled > lim) {
-          alert(`Somma dei punti (${sumFilled}) superiore al limite di ${lim}. Controlla i valori inseriti.`);
+      if(!hasNegative){
+        if(sumFilled > lim){
+          alert(`Somma dei punti (${sumFilled}) superiore al limite di ${lim}.`);
           return;
         }
         const leftover = lim - sumFilled;
-        const autoInput = emptyInputs[0];
-        const autoId = autoInput.dataset.id;
-
+        const autoId = emptyInputs[0].dataset.id;
         values[autoId] = leftover;
-        if (leftover !== 0) anyFilled = true;
+        if(leftover !== 0) anyFilled = true;
       }
     }
 
-    if (!anyFilled) {
-      if (!confirm('Tutti zero. Aggiungere comunque il turno?')) return;
+    if(!anyFilled){
+      if(!confirm("Tutti zero. Aggiungere comunque il turno?")) return;
     }
 
     const roundValues = {};
     state.players.forEach(p => {
-      const v = values[p.id] ?? 0;
+      const v = (typeof values[p.id] === "number") ? values[p.id] : 0;
       roundValues[p.id] = v;
-      p.score = (p.score ?? 0) + v;
+      p.score = scoreOf(p) + v;
     });
 
     state.rounds.push({
       id: uid(),
       values: roundValues,
-      note: $('#turn-note').value.trim() || null,
+      note: ($("#turn-note").value.trim() || null),
       ts: Date.now()
     });
 
-    inputs.forEach(i => i.value='');
-    $('#turn-note').value='';
+    inputs.forEach(i => i.value = "");
+    $("#turn-note").value = "";
 
     save();
     renderScoreboard();
     renderHistory();
-
-    const beforeHadWinner = $('#winner-banner').style.display === 'block';
-    checkWinner(!beforeHadWinner);
+    checkWinner();
   }
 
   function undoTurn(){
-    if(state.rounds.length===0) return;
+    if(state.rounds.length === 0) return;
 
     const last = state.rounds.pop();
-    Object.entries(last.values).forEach(([pid, val]) => {
+    for(const [pid, val] of Object.entries(last.values || {})){
       const p = state.players.find(pp => pp.id === pid);
-      if(p) p.score = (p.score ?? 0) - (val ?? 0);
-    });
+      if(p) p.score = scoreOf(p) - (Number(val) || 0);
+    }
 
     save();
     renderScoreboard();
@@ -699,8 +568,8 @@
   }
 
   function setTarget(){
-    const raw = $('#target').value.trim();
-    if(raw===''){
+    const raw = $("#target").value.trim();
+    if(raw === ""){
       state.target = null;
       save();
       renderScoreboard();
@@ -709,8 +578,8 @@
     }
 
     const n = Number(raw);
-    if(!Number.isFinite(n) || n<=0) {
-      alert('Inserisci un numero valido > 0.');
+    if(!Number.isFinite(n) || n <= 0){
+      alert("Inserisci un numero valido > 0.");
       return;
     }
 
@@ -722,56 +591,47 @@
 
   function clearTarget(){
     state.target = null;
-    $('#target').value = '';
+    $("#target").value = "";
     save();
     renderScoreboard();
     checkWinner();
   }
 
   function exportGame(){
-    if (state.players.length === 0) {
-      alert('Nessun giocatore da esportare.');
+    if(state.players.length === 0){
+      alert("Nessun giocatore da esportare.");
       return;
     }
 
-    const m = currentMode();
-    const scores = state.players.map(p => ({ name: p.name, score: p.score ?? 0 }));
-    const { winners, bestScore } = bestPlayers();
+    const m = mode();
+    const { bestScore } = bestPlayers();
     const ruleText = (m.winner === "MIN") ? "punteggio più basso" : "punteggio più alto";
 
     const lines = [];
     lines.push(`${m.name} – Risultati`);
-    lines.push('');
+    lines.push("");
     lines.push(`Data: ${new Date().toLocaleString()}`);
     lines.push(`Limite per turno: ${m.limit}`);
-    if (state.target != null) lines.push(`Punteggio obiettivo: ${state.target}`);
-    lines.push('');
+    if(state.target != null) lines.push(`Punteggio obiettivo: ${state.target}`);
+    lines.push("");
 
-    // (opzionale) anche nel testo esportato: ordinati decrescente
-    scores.sort((a,b)=>b.score-a.score).forEach(p => {
-      const isWinner = p.score === bestScore;
-      const label = isWinner ? `  <-- VINCITORE (${ruleText})` : '';
-      lines.push(`${p.name}: ${p.score} punti${label}`);
+    const sorted = [...state.players].sort((a,b) => scoreOf(b) - scoreOf(a));
+    sorted.forEach(p => {
+      const s = scoreOf(p);
+      const label = (s === bestScore) ? `  <-- VINCITORE (${ruleText})` : "";
+      lines.push(`${p.name}: ${s} punti${label}`);
     });
-
-    if (winners.length > 1) {
-      const names = winners.map(w => w.name).join(', ');
-      lines.push('');
-      lines.push(`Pareggio tra: ${names}`);
-    }
-
-    const summary = lines.join('\n');
 
     const exportData = {
       ...state,
-      summary,
-      version: 3,
-      exportedAt: new Date().toISOString()
+      version: 4,
+      exportedAt: new Date().toISOString(),
+      summary: lines.join("\n")
     };
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    const dt = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    const dt = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
     a.href = URL.createObjectURL(blob);
     a.download = `segnapunti-${m.id}-${dt}.json`;
     document.body.appendChild(a);
@@ -784,25 +644,21 @@
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        if(!data || !Array.isArray(data.players) || !Array.isArray(data.rounds)) throw new Error();
+        if(!data || !Array.isArray(data.players) || !Array.isArray(data.rounds)) throw new Error("bad");
 
-        // mode (fallback: assemazz)
-        state.mode = (data.mode === MODES.TRE7.id || data.mode === MODES.ASSEMAZZ.id) ? data.mode : MODES.ASSEMAZZ.id;
-
+        state.mode = (data.mode === "3e7" || data.mode === "assemazz") ? data.mode : "assemazz";
         state.players = data.players.map(p => ({
           id: p.id || uid(),
-          name: String(p.name || 'Giocatore'),
+          name: String(p.name || "Giocatore"),
           score: Number(p.score || 0)
         }));
-
         state.rounds = data.rounds.map(r => ({
           id: r.id || uid(),
           values: r.values || {},
           note: r.note || null,
           ts: r.ts || Date.now()
         }));
-
-        state.target = (data.target == null ? null : Number(data.target));
+        state.target = (data.target == null) ? null : Number(data.target);
 
         save();
         renderModeUI();
@@ -811,20 +667,22 @@
         renderTurnForm();
         renderHistory();
         checkWinner();
-        alert('Partita importata con successo.');
+        if(state.target != null) $("#target").value = state.target;
+
+        alert("Partita importata con successo.");
       } catch {
-        alert('File non valido.');
+        alert("File non valido.");
       }
     };
     reader.readAsText(file);
   }
 
   function resetAll(){
-    if(!confirm('Azzera tutto? Questa azione non è reversibile.')) return;
+    if(!confirm("Azzera tutto? Questa azione non è reversibile.")) return;
     state.players = [];
     state.rounds = [];
     state.target = null;
-    // NON resetto mode: resta quella scelta
+    $("#target").value = "";
     save();
     renderPlayers();
     renderScoreboard();
@@ -833,195 +691,67 @@
     checkWinner();
   }
 
-  /* ---------- Modal vittoria + confetti ---------- */
+  function changeMode(newMode){
+    if(newMode === state.mode) return;
 
-  const winBackdrop = $('#win-backdrop');
-  const confettiCanvas = $('#confetti');
-  const ctx = confettiCanvas.getContext('2d');
+    const ok = (state.rounds.length === 0 && state.players.every(p => scoreOf(p) === 0))
+      ? true
+      : confirm("Cambiare modalità resetta punteggi e turni (regole diverse). Vuoi continuare?");
 
-  function showWinModal(top, ruleText){
-    if(!state.target) return;
-    $('#win-name').textContent = top.name;
-    $('#win-score').textContent = top.score;
-    $('#win-rule').textContent = `ha vinto (${ruleText})`;
-    winBackdrop.style.display = 'flex';
-    startConfetti(2500);
-    try { navigator.vibrate && navigator.vibrate([60,30,60]); } catch {}
-    setTimeout(() => $('#win-ok').focus(), 50);
-  }
-
-  $('#win-ok').addEventListener('click', () => {
-    winBackdrop.style.display='none';
-    stopConfetti();
-  });
-
-  let confettiId = null;
-
-  function startConfetti(ms=2000){
-    resizeCanvas();
-    confettiCanvas.style.display = 'block';
-
-    const parts = Array.from({length: 160}, () => ({
-      x: Math.random()*confettiCanvas.width,
-      y: -Math.random()*confettiCanvas.height,
-      r: Math.random()*6+3,
-      vx: (Math.random()-0.5)*2,
-      vy: Math.random()*2+2,
-      a: Math.random()*Math.PI,
-      va: Math.random()*0.2+0.05
-    }));
-
-    function frame(){
-      ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
-      parts.forEach(p=>{
-        p.x += p.vx;
-        p.y += p.vy;
-        p.a += p.va;
-        if(p.y > confettiCanvas.height+10) {
-          p.y = -10;
-          p.x = Math.random()*confettiCanvas.width;
-        }
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.a);
-        ctx.fillStyle = `hsl(${(p.x/confettiCanvas.width)*360}, 90%, 60%)`;
-        ctx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
-        ctx.restore();
-      });
-      confettiId = requestAnimationFrame(frame);
-    }
-
-    frame();
-    setTimeout(stopConfetti, ms);
-  }
-
-  function stopConfetti(){
-    if(confettiId){
-      cancelAnimationFrame(confettiId);
-      confettiId=null;
-    }
-    confettiCanvas.style.display = 'none';
-  }
-
-  function resizeCanvas(){
-    confettiCanvas.width = window.innerWidth;
-    confettiCanvas.height = window.innerHeight;
-  }
-
-  window.addEventListener('resize', resizeCanvas);
-
-  /* ---------- Modal scelta modalità ---------- */
-
-  const modeBackdrop = $('#mode-backdrop');
-
-  function openModeModal(force = false){
-    if(!force && modeBackdrop.style.display === 'flex') return;
-    modeBackdrop.style.display = 'flex';
-    setTimeout(() => $('#mode-assemazz').focus(), 30);
-  }
-
-  function closeModeModal(){
-    modeBackdrop.style.display = 'none';
-  }
-
-  function setMode(modeId){
-    const isSame = state.mode === modeId;
-    if(isSame) { closeModeModal(); return; }
-
-    if(state.rounds.length > 0 || state.players.some(p => (p.score ?? 0) !== 0)){
-      const ok = confirm('Cambiare modalità resetta punteggi e turni (regole diverse). Vuoi continuare?');
-      if(!ok) return;
-      state.players.forEach(p => p.score = 0);
-      state.rounds = [];
-      state.target = null;
-      $('#target').value = '';
-      $('#turn-note').value = '';
-    }
-
-    state.mode = modeId;
-    save();
-    renderModeUI();
-    renderScoreboard();
-    renderTurnForm();
-    renderHistory();
-    checkWinner();
-    closeModeModal();
-  }
-
-  $('#btn-mode').addEventListener('click', () => openModeModal(false));
-  $('#mode-assemazz').addEventListener('click', () => setMode(MODES.ASSEMAZZ.id));
-  $('#mode-37').addEventListener('click', () => setMode(MODES.TRE7.id));
-  $('#mode-cancel').addEventListener('click', closeModeModal);
-
-  /* ---------- Utils ---------- */
-
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => (
-      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
-    ));
-  }
-
-  function getPlayerNameById(id){
-    const p = state.players.find(x=>x.id===id);
-    return p ? p.name : 'Giocatore';
-  }
-
-  /* ---------- Event binding ---------- */
-
-  $('#add-player').addEventListener('click', () => {
-    addPlayer($('#new-player').value);
-    $('#new-player').value='';
-    $('#new-player').focus();
-  });
-
-  $('#new-player').addEventListener('keydown', e => {
-    if(e.key==='Enter') $('#add-player').click();
-  });
-
-  $('#add-turn').addEventListener('click', addTurn);
-  $('#undo-turn').addEventListener('click', undoTurn);
-  $('#save-target').addEventListener('click', setTarget);
-  $('#clear-target').addEventListener('click', clearTarget);
-  $('#btn-export').addEventListener('click', exportGame);
-
-  $('#import-file').addEventListener('change', e => {
-    if(e.target.files && e.target.files[0]) importGame(e.target.files[0]);
-    e.target.value = '';
-  });
-
-  $('#btn-reset').addEventListener('click', resetAll);
-
-  /* ---------- Init ---------- */
-
-  function init(){
-    // normalizzo score
-    state.players.forEach(p => { if(typeof p.score!=='number') p.score=0; });
-
-    // se non c'è mode, chiedo scelta iniziale
-    if(state.mode !== MODES.ASSEMAZZ.id && state.mode !== MODES.TRE7.id){
-      state.mode = MODES.ASSEMAZZ.id; // default, ma mostro comunque la scelta
-      save();
-      renderModeUI();
-      renderPlayers();
-      renderScoreboard();
-      renderTurnForm();
-      renderHistory();
-      checkWinner();
-      if(state.target != null) $('#target').value = state.target;
-      openModeModal(true);
+    if(!ok){
+      $("#mode-select").value = state.mode;
       return;
     }
 
+    state.mode = newMode;
+    state.players.forEach(p => p.score = 0);
+    state.rounds = [];
+    state.target = null;
+    $("#target").value = "";
+    $("#turn-note").value = "";
+
+    save();
     renderModeUI();
-    renderPlayers();
     renderScoreboard();
     renderTurnForm();
     renderHistory();
     checkWinner();
-    if(state.target != null) $('#target').value = state.target;
   }
 
-  init();
+  // --- Events
+  $("#add-player").addEventListener("click", () => {
+    addPlayer($("#new-player").value);
+    $("#new-player").value = "";
+    $("#new-player").focus();
+  });
+
+  $("#new-player").addEventListener("keydown", e => {
+    if(e.key === "Enter") $("#add-player").click();
+  });
+
+  $("#add-turn").addEventListener("click", addTurn);
+  $("#undo-turn").addEventListener("click", undoTurn);
+  $("#save-target").addEventListener("click", setTarget);
+  $("#clear-target").addEventListener("click", clearTarget);
+  $("#btn-export").addEventListener("click", exportGame);
+
+  $("#import-file").addEventListener("change", e => {
+    if(e.target.files && e.target.files[0]) importGame(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  $("#btn-reset").addEventListener("click", resetAll);
+
+  $("#mode-select").addEventListener("change", e => changeMode(e.target.value));
+
+  // --- Init
+  renderModeUI();
+  renderPlayers();
+  renderScoreboard();
+  renderTurnForm();
+  renderHistory();
+  checkWinner();
+  if(state.target != null) $("#target").value = state.target;
 </script>
 </body>
 </html>
