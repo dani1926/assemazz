@@ -34,6 +34,7 @@
       top:0;
       background:rgba(13,16,32,.9);
       backdrop-filter: blur(6px);
+      z-index: 10;
     }
     h1 {
       font-size:18px;
@@ -152,7 +153,7 @@
     }
     .small { font-size:12px; }
 
-    /* --- Modal vittoria --- */
+    /* --- Modal (vittoria / scelta modalità) --- */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -196,8 +197,12 @@
 </head>
 <body>
 <header>
-  <h1>Ass e Mazz · Segnapunti</h1>
+  <div class="row" style="gap:10px">
+    <h1 id="title">Ass e Mazz · Segnapunti</h1>
+    <span class="pill" id="mode-pill" title="Modalità corrente"></span>
+  </div>
   <div class="row">
+    <button id="btn-mode" class="btn">Modalità</button>
     <button id="btn-export" class="btn">Esporta</button>
     <label class="btn" for="import-file">
       Importa
@@ -216,9 +221,7 @@
       <input id="new-player" type="text" placeholder="Aggiungi giocatore (es. Daniele)" />
       <button id="add-player" class="btn acc">Aggiungi</button>
     </div>
-    <p class="muted tight">
-      💡 Limite per turno: <strong>±21</strong> punti per giocatore. Trascina per riordinare (desktop).
-    </p>
+    <p class="muted tight" id="players-hint"></p>
   </section>
 
   <!-- Punteggi & Obiettivo -->
@@ -245,10 +248,7 @@
       <button id="add-turn" class="btn ok">Aggiungi turno</button>
       <button id="undo-turn" class="btn warn">Annulla ultimo turno</button>
     </div>
-    <p class="muted tight">
-      Inserisci i punti (ammessi negativi). <strong>Max ±21</strong> per giocatore.
-      Se lasci <strong>un solo giocatore vuoto</strong>, gli verranno assegnati automaticamente i punti mancanti per arrivare a 21.
-    </p>
+    <p class="muted tight" id="turn-hint"></p>
   </section>
 
   <!-- Storico -->
@@ -265,9 +265,24 @@
     <h3 id="win-title">🎉 Vittoria!</h3>
     <p>
       <span class="winner-name" id="win-name"></span><br/>
-      ha vinto con <strong id="win-score"></strong> punti (punteggio più basso)
+      <span id="win-rule"></span> con <strong id="win-score"></strong> punti
     </p>
     <button id="win-ok" class="btn acc">OK</button>
+  </div>
+</div>
+
+<!-- Modal scelta modalità -->
+<div id="mode-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="mode-title">
+  <div class="modal">
+    <h3 id="mode-title">Scegli modalità</h3>
+    <p class="muted" id="mode-desc"></p>
+    <div class="row" style="justify-content:center; gap:10px; margin-top:14px">
+      <button id="mode-assemazz" class="btn acc">Ass e Mazz (21)</button>
+      <button id="mode-37" class="btn acc">3 e 7 (11)</button>
+    </div>
+    <div class="row" style="justify-content:center; margin-top:10px">
+      <button id="mode-cancel" class="btn ghost">Annulla</button>
+    </div>
   </div>
 </div>
 
@@ -279,17 +294,30 @@
 
 <script>
   /* ---------- Modello dati ---------- */
-  const storageKey = "assemazz_v2";
-  const TURN_LIMIT = 21; // ±21 per turno
+  const storageKey = "assemazz_v3";
+
+  const MODES = {
+    ASSEMAZZ: { id: "assemazz", name: "Ass e Mazz", limit: 21, winner: "MIN" }, // vince chi ha meno
+    TRE7:     { id: "3e7",      name: "3 e 7",      limit: 11, winner: "MAX" }  // vince chi ha più
+  };
 
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
   const state = load() || {
+    mode: null,   // "assemazz" | "3e7"
     players: [],  // {id, name, score}
     rounds: [],   // {id, values: {playerId: points}, note, ts}
     target: null  // numeric or null
   };
+
+  function currentMode(){
+    return state.mode === MODES.TRE7.id ? MODES.TRE7 : MODES.ASSEMAZZ;
+  }
+
+  function TURN_LIMIT(){
+    return currentMode().limit;
+  }
 
   function save(){
     localStorage.setItem(storageKey, JSON.stringify(state));
@@ -309,13 +337,23 @@
 
   /* ---------- Rendering ---------- */
 
+  function renderModeUI(){
+    const m = currentMode();
+    $('#title').textContent = `${m.name} · Segnapunti`;
+    $('#mode-pill').textContent = `Modalità: ${m.name}`;
+    $('#players-hint').innerHTML = `💡 Limite per turno: <strong>±${m.limit}</strong> punti per giocatore. Trascina per riordinare (desktop).`;
+    $('#turn-hint').innerHTML =
+      `Inserisci i punti (ammessi negativi). <strong>Max ±${m.limit}</strong> per giocatore.
+       Se lasci <strong>un solo giocatore vuoto</strong>, gli verranno assegnati automaticamente i punti mancanti per arrivare a ${m.limit}.`;
+    $('#mode-desc').innerHTML =
+      `Ass e Mazz: limite 21, vince chi ha <strong>meno</strong> punti. · 3 e 7: limite 11, vince chi ha <strong>più</strong> punti.`;
+  }
+
   function renderPlayers(){
     const box = $('#players');
 
     if(state.players.length === 0){
-      box.innerHTML = `
-        <div class="empty">Nessun giocatore. Aggiungine uno qui sotto.</div>
-      `;
+      box.innerHTML = `<div class="empty">Nessun giocatore. Aggiungine uno qui sotto.</div>`;
       renderScoreboard();
       renderTurnForm();
       return;
@@ -342,12 +380,10 @@
       });
 
       row.querySelector('.remove').addEventListener('click', () => {
-        if(!confirm(`Rimuovere ${p.name}? Saranno eliminati anche i suoi punti nei turni.`)) return;
+        if(!confirm(\`Rimuovere \${p.name}? Saranno eliminati anche i suoi punti nei turni.\`)) return;
         const i = state.players.findIndex(x => x.id === p.id);
         state.players.splice(i,1);
-        state.rounds.forEach(r => {
-          delete r.values[p.id];
-        });
+        state.rounds.forEach(r => delete r.values[p.id]);
         save();
         renderPlayers();
         renderScoreboard();
@@ -357,16 +393,9 @@
       });
 
       // drag reorder
-      row.addEventListener('dragstart', e => {
-        e.dataTransfer.setData('text/plain', p.id);
-      });
-      row.addEventListener('dragover', e => {
-        e.preventDefault();
-        row.style.outline='1px dashed #4cc9f0';
-      });
-      row.addEventListener('dragleave', () => {
-        row.style.outline='';
-      });
+      row.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', p.id));
+      row.addEventListener('dragover', e => { e.preventDefault(); row.style.outline='1px dashed #4cc9f0'; });
+      row.addEventListener('dragleave', () => { row.style.outline=''; });
       row.addEventListener('drop', e => {
         e.preventDefault();
         row.style.outline='';
@@ -392,27 +421,37 @@
     return state.players.some(p => (p.score ?? 0) >= state.target);
   }
 
+  function sortedPlayersDesc(){
+    return [...state.players].sort((a,b) => (b.score ?? 0) - (a.score ?? 0));
+  }
+
   function renderScoreboard(){
     const box = $('#scoreboard');
 
     if(state.players.length === 0) {
-      box.innerHTML = `
-        <div class="empty">Inizia aggiungendo i giocatori.</div>
-      `;
+      box.innerHTML = `<div class="empty">Inizia aggiungendo i giocatori.</div>`;
       return;
     }
 
-    const scores = state.players.map(p => p.score ?? 0);
-    const min = Math.min(...scores);
+    const m = currentMode();
     const gameOver = isGameOver();
 
-    const rows = state.players.map(p => {
-      const score = p.score ?? 0;
-      let rowClass = '';
+    const scores = state.players.map(p => p.score ?? 0);
+    const min = Math.min(...scores);
+    const max = Math.max(...scores);
 
-      if (score === min) {
-        rowClass = gameOver ? 'champ' : 'leader';
-      }
+    const rows = sortedPlayersDesc().map(p => {
+      const score = p.score ?? 0;
+
+      // Winner logic:
+      // - Ass e Mazz: migliore = MIN
+      // - 3 e 7: migliore = MAX
+      const isBest =
+        (m.winner === "MIN" && score === min) ||
+        (m.winner === "MAX" && score === max);
+
+      let rowClass = '';
+      if (isBest) rowClass = gameOver ? 'champ' : 'leader';
 
       return `
         <tr class="${rowClass}">
@@ -444,12 +483,11 @@
     const box = $('#turn-form');
 
     if(state.players.length === 0){
-      box.innerHTML = `
-        <div class="empty">Aggiungi giocatori per inserire un turno.</div>
-      `;
+      box.innerHTML = `<div class="empty">Aggiungi giocatori per inserire un turno.</div>`;
       return;
     }
 
+    const lim = TURN_LIMIT();
     const inputs = state.players.map(p => `
       <div>
         <label class="tag">${escapeHtml(p.name)}</label>
@@ -459,8 +497,8 @@
           data-id="${p.id}"
           placeholder="+/- punti"
           step="1"
-          min="-${TURN_LIMIT}"
-          max="${TURN_LIMIT}"
+          min="-${lim}"
+          max="${lim}"
         />
       </div>
     `).join('');
@@ -471,9 +509,7 @@
     if(all.length){
       const last = all[all.length-1];
       last.addEventListener('keydown', e => {
-        if(e.key === 'Enter'){
-          $('#add-turn').click();
-        }
+        if(e.key === 'Enter') $('#add-turn').click();
       });
     }
   }
@@ -481,9 +517,7 @@
   function renderHistory(){
     const box = $('#history');
     if(state.rounds.length === 0){
-      box.innerHTML = `
-        <div class="empty">Ancora nessun turno registrato.</div>
-      `;
+      box.innerHTML = `<div class="empty">Ancora nessun turno registrato.</div>`;
       return;
     }
 
@@ -508,6 +542,17 @@
     box.innerHTML = items;
   }
 
+  function bestPlayers(){
+    const m = currentMode();
+    const scores = state.players.map(p => p.score ?? 0);
+    const min = Math.min(...scores);
+    const max = Math.max(...scores);
+
+    const bestScore = (m.winner === "MIN") ? min : max;
+    const winners = state.players.filter(p => (p.score ?? 0) === bestScore);
+    return { winners, bestScore };
+  }
+
   function checkWinner(triggerModal = false){
     const banner = $('#winner-banner');
 
@@ -517,31 +562,29 @@
       return;
     }
 
-    const gameOver = isGameOver();
-    if (!gameOver) {
+    if (!isGameOver()) {
       banner.style.display = 'none';
       banner.textContent = '';
       return;
     }
 
-    const scores = state.players.map(p => p.score ?? 0);
-    const min = Math.min(...scores);
-    const winners = state.players.filter(p => (p.score ?? 0) === min);
+    const { winners, bestScore } = bestPlayers();
     const top = winners[0];
+    const m = currentMode();
+
+    const ruleText = (m.winner === "MIN") ? "punteggio più basso" : "punteggio più alto";
 
     banner.style.display = 'block';
-    banner.innerHTML = `🏆 <strong>${escapeHtml(top.name)}</strong> vince con <strong>${top.score}</strong> punti (punteggio più basso).`;
+    banner.innerHTML = `🏆 <strong>${escapeHtml(top.name)}</strong> vince con <strong>${bestScore}</strong> punti (${ruleText}).`;
 
-    if (triggerModal) {
-      showWinModal(top);
-    }
+    if (triggerModal) showWinModal(top, ruleText);
   }
 
   /* ---------- Azioni ---------- */
 
   function addPlayer(name){
     name = (name||'').trim();
-    if(!name){ return; }
+    if(!name) return;
 
     if(state.players.some(p => p.name.toLowerCase() === name.toLowerCase())){
       alert('Nome già presente.');
@@ -558,6 +601,8 @@
   function addTurn(){
     if(state.players.length===0) return;
 
+    const lim = TURN_LIMIT();
+
     const inputs = $$('.turn-input');
     const values = {};
     let anyFilled = false;
@@ -571,17 +616,14 @@
       const raw = inp.value.trim();
       const playerId = inp.dataset.id;
 
-      if (raw === '') {
-        emptyInputs.push(inp);
-        continue;
-      }
+      if (raw === '') { emptyInputs.push(inp); continue; }
 
       const val = Number(raw);
       if (isNaN(val)) continue;
 
-      // Validazione: ±21
-      if (Math.abs(val) > TURN_LIMIT) {
-        alert(`Limite per turno: ±${TURN_LIMIT}. Valore non valido per "${getPlayerNameById(playerId)}" (${val}).`);
+      // Validazione: ±lim
+      if (Math.abs(val) > lim) {
+        alert(`Limite per turno: ±${lim}. Valore non valido per "${getPlayerNameById(playerId)}" (${val}).`);
         inp.focus();
         return;
       }
@@ -592,18 +634,18 @@
       filledCount++;
     }
 
-    // Auto-calcolo punti di dietro:
+    // Auto-calcolo punti mancanti:
     // - esattamente un giocatore vuoto
     // - nessun valore negativo
-    // - somma <= TURN_LIMIT
+    // - somma <= lim
     if (emptyInputs.length === 1 && filledCount > 0) {
       const hasNegative = Object.values(values).some(v => v < 0);
       if (!hasNegative) {
-        if (sumFilled > TURN_LIMIT) {
-          alert(`Somma dei punti (${sumFilled}) superiore al limite di ${TURN_LIMIT}. Controlla i valori inseriti.`);
+        if (sumFilled > lim) {
+          alert(`Somma dei punti (${sumFilled}) superiore al limite di ${lim}. Controlla i valori inseriti.`);
           return;
         }
-        const leftover = TURN_LIMIT - sumFilled;
+        const leftover = lim - sumFilled;
         const autoInput = emptyInputs[0];
         const autoId = autoInput.dataset.id;
 
@@ -647,9 +689,7 @@
     const last = state.rounds.pop();
     Object.entries(last.values).forEach(([pid, val]) => {
       const p = state.players.find(pp => pp.id === pid);
-      if(p){
-        p.score = (p.score ?? 0) - (val ?? 0);
-      }
+      if(p) p.score = (p.score ?? 0) - (val ?? 0);
     });
 
     save();
@@ -694,25 +734,23 @@
       return;
     }
 
-    const scores = state.players.map(p => ({
-      name: p.name,
-      score: p.score ?? 0
-    }));
-    const min = Math.min(...scores.map(p => p.score));
-    const winners = scores.filter(p => p.score === min);
+    const m = currentMode();
+    const scores = state.players.map(p => ({ name: p.name, score: p.score ?? 0 }));
+    const { winners, bestScore } = bestPlayers();
+    const ruleText = (m.winner === "MIN") ? "punteggio più basso" : "punteggio più alto";
 
     const lines = [];
-    lines.push('Ass e Mazz – Risultati');
+    lines.push(`${m.name} – Risultati`);
     lines.push('');
     lines.push(`Data: ${new Date().toLocaleString()}`);
-    if (state.target != null) {
-      lines.push(`Punteggio obiettivo: ${state.target}`);
-    }
+    lines.push(`Limite per turno: ${m.limit}`);
+    if (state.target != null) lines.push(`Punteggio obiettivo: ${state.target}`);
     lines.push('');
 
-    scores.forEach(p => {
-      const isWinner = p.score === min;
-      const label = isWinner ? '  <-- VINCITORE (punteggio più basso)' : '';
+    // (opzionale) anche nel testo esportato: ordinati decrescente
+    scores.sort((a,b)=>b.score-a.score).forEach(p => {
+      const isWinner = p.score === bestScore;
+      const label = isWinner ? `  <-- VINCITORE (${ruleText})` : '';
       lines.push(`${p.name}: ${p.score} punti${label}`);
     });
 
@@ -727,7 +765,7 @@
     const exportData = {
       ...state,
       summary,
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString()
     };
 
@@ -735,7 +773,7 @@
     const a = document.createElement('a');
     const dt = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
     a.href = URL.createObjectURL(blob);
-    a.download = `ass-e-mazz-${dt}.json`;
+    a.download = `segnapunti-${m.id}-${dt}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -747,6 +785,9 @@
       try {
         const data = JSON.parse(reader.result);
         if(!data || !Array.isArray(data.players) || !Array.isArray(data.rounds)) throw new Error();
+
+        // mode (fallback: assemazz)
+        state.mode = (data.mode === MODES.TRE7.id || data.mode === MODES.ASSEMAZZ.id) ? data.mode : MODES.ASSEMAZZ.id;
 
         state.players = data.players.map(p => ({
           id: p.id || uid(),
@@ -764,6 +805,7 @@
         state.target = (data.target == null ? null : Number(data.target));
 
         save();
+        renderModeUI();
         renderPlayers();
         renderScoreboard();
         renderTurnForm();
@@ -782,6 +824,7 @@
     state.players = [];
     state.rounds = [];
     state.target = null;
+    // NON resetto mode: resta quella scelta
     save();
     renderPlayers();
     renderScoreboard();
@@ -792,24 +835,23 @@
 
   /* ---------- Modal vittoria + confetti ---------- */
 
-  const backdrop = $('#win-backdrop');
+  const winBackdrop = $('#win-backdrop');
   const confettiCanvas = $('#confetti');
   const ctx = confettiCanvas.getContext('2d');
 
-  function showWinModal(top){
+  function showWinModal(top, ruleText){
     if(!state.target) return;
     $('#win-name').textContent = top.name;
     $('#win-score').textContent = top.score;
-    backdrop.style.display = 'flex';
+    $('#win-rule').textContent = `ha vinto (${ruleText})`;
+    winBackdrop.style.display = 'flex';
     startConfetti(2500);
-    try {
-      navigator.vibrate && navigator.vibrate([60,30,60]);
-    } catch {}
+    try { navigator.vibrate && navigator.vibrate([60,30,60]); } catch {}
     setTimeout(() => $('#win-ok').focus(), 50);
   }
 
   $('#win-ok').addEventListener('click', () => {
-    backdrop.style.display='none';
+    winBackdrop.style.display='none';
     stopConfetti();
   });
 
@@ -868,6 +910,49 @@
 
   window.addEventListener('resize', resizeCanvas);
 
+  /* ---------- Modal scelta modalità ---------- */
+
+  const modeBackdrop = $('#mode-backdrop');
+
+  function openModeModal(force = false){
+    if(!force && modeBackdrop.style.display === 'flex') return;
+    modeBackdrop.style.display = 'flex';
+    setTimeout(() => $('#mode-assemazz').focus(), 30);
+  }
+
+  function closeModeModal(){
+    modeBackdrop.style.display = 'none';
+  }
+
+  function setMode(modeId){
+    const isSame = state.mode === modeId;
+    if(isSame) { closeModeModal(); return; }
+
+    if(state.rounds.length > 0 || state.players.some(p => (p.score ?? 0) !== 0)){
+      const ok = confirm('Cambiare modalità resetta punteggi e turni (regole diverse). Vuoi continuare?');
+      if(!ok) return;
+      state.players.forEach(p => p.score = 0);
+      state.rounds = [];
+      state.target = null;
+      $('#target').value = '';
+      $('#turn-note').value = '';
+    }
+
+    state.mode = modeId;
+    save();
+    renderModeUI();
+    renderScoreboard();
+    renderTurnForm();
+    renderHistory();
+    checkWinner();
+    closeModeModal();
+  }
+
+  $('#btn-mode').addEventListener('click', () => openModeModal(false));
+  $('#mode-assemazz').addEventListener('click', () => setMode(MODES.ASSEMAZZ.id));
+  $('#mode-37').addEventListener('click', () => setMode(MODES.TRE7.id));
+  $('#mode-cancel').addEventListener('click', closeModeModal);
+
   /* ---------- Utils ---------- */
 
   function escapeHtml(s){
@@ -890,9 +975,7 @@
   });
 
   $('#new-player').addEventListener('keydown', e => {
-    if(e.key==='Enter'){
-      $('#add-player').click();
-    }
+    if(e.key==='Enter') $('#add-player').click();
   });
 
   $('#add-turn').addEventListener('click', addTurn);
@@ -911,9 +994,25 @@
   /* ---------- Init ---------- */
 
   function init(){
-    state.players.forEach(p => {
-      if(typeof p.score!=='number') p.score=0;
-    });
+    // normalizzo score
+    state.players.forEach(p => { if(typeof p.score!=='number') p.score=0; });
+
+    // se non c'è mode, chiedo scelta iniziale
+    if(state.mode !== MODES.ASSEMAZZ.id && state.mode !== MODES.TRE7.id){
+      state.mode = MODES.ASSEMAZZ.id; // default, ma mostro comunque la scelta
+      save();
+      renderModeUI();
+      renderPlayers();
+      renderScoreboard();
+      renderTurnForm();
+      renderHistory();
+      checkWinner();
+      if(state.target != null) $('#target').value = state.target;
+      openModeModal(true);
+      return;
+    }
+
+    renderModeUI();
     renderPlayers();
     renderScoreboard();
     renderTurnForm();
